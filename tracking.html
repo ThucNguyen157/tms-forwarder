@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tra cứu Lô hàng | Forwarder TMS</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; }
+        .tracking-container { max-width: 600px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input[type="text"] { width: 70%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 20px; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #004494; }
+        .result-box { margin-top: 20px; display: none; }
+        .event-item { border-left: 2px solid #0056b3; padding-left: 15px; margin-bottom: 15px; }
+        .event-date { font-size: 0.85em; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="tracking-container">
+    <h2>Tra cứu Vận Đơn (Track & Trace)</h2>
+    <div>
+        <input type="text" id="trackingInput" placeholder="Nhập mã HBL..." value="HBL123456" />
+        <button onclick="trackShipment()">Tra Cứu</button>
+    </div>
+    
+    <div id="resultBox" class="result-box">
+        <h3 id="statusBadge">Trạng thái: </h3>
+        <p><strong>Cảng đi (POL):</strong> <span id="pol"></span> &rarr; <strong>Cảng đến (POD):</strong> <span id="pod"></span></p>
+        <p><strong>Tàu/Chuyến:</strong> <span id="vessel"></span></p>
+        
+        <h4>Lịch trình chi tiết:</h4>
+        <div id="timeline"></div>
+    </div>
+</div>
+
+<script>
+    async function trackShipment() {
+        const trackingNumber = document.getElementById('trackingInput').value.trim();
+        if(!trackingNumber) return alert('Vui lòng nhập mã vận đơn!');
+
+        const apiUrl = `http://localhost:3000/api/track/${trackingNumber}`; 
+        
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.error);
+                document.getElementById('resultBox').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('resultBox').style.display = 'block';
+            document.getElementById('statusBadge').innerText = `Trạng thái: ${data.shipment_info.current_status}`;
+            document.getElementById('pol').innerText = data.shipment_info.origin;
+            document.getElementById('pod').innerText = data.shipment_info.destination;
+            document.getElementById('vessel').innerText = data.shipment_info.vessel_flight;
+
+            const timelineDiv = document.getElementById('timeline');
+            timelineDiv.innerHTML = '';
+            
+            data.tracking_history.forEach(event => {
+                const dateObj = new Date(event.event_date);
+                const dateString = dateObj.toLocaleString('vi-VN');
+                
+                timelineDiv.innerHTML += `
+                    <div class="event-item">
+                        <div class="event-date">${dateString} - <strong>${event.location}</strong></div>
+                        <div class="event-desc">${event.description}</div>
+                    </div>
+                `;
+            });
+            
+        } catch (error) {
+            console.error("Lỗi kết nối tới TMS API", error);
+            alert("Đã xảy ra sự cố khi kết nối tới máy chủ.");
+        }
+    }
+</script>
+
+</body>
+</html>
