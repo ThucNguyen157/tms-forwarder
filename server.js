@@ -8,12 +8,12 @@ app.use(express.json());
 
 // Kết nối Database MySQL (dùng XAMPP)
 const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '', // Mặc định XAMPP để trống mật khẩu
-    database: 'tms_forwarder'
+  host: 'b7l70fpcc4a39pr9kb6l-mysql.services.clever-cloud.com',
+  user: 'uortvc30wu0qqj26',
+  password: 'MẬT_KHẨU_CỦA_BẠN',
+  database: 'b7l70fpcc4a39pr9kb6l',
+  port: 3306
 });
-
 // API Tra cứu vận đơn
 app.get('/api/track/:tracking_number', async (req, res) => {
     const trackingNumber = req.params.tracking_number;
